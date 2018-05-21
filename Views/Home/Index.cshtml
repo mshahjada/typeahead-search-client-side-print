@@ -1,0 +1,156 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+
+
+<h4>Generate pdf from client side using pdfmake</h4>
+<a href="#" class="btn btn-success btn-sm" onclick="showresult()">
+    <span class="glyphicon glyphicon-print"></span> Print
+</a>
+
+<h4>Type ahead Search through jQuery</h4>
+<div class="typeahead__container">
+    <div class="typeahead__field">
+
+        <span class="typeahead__query">
+            <input class="type-ahead-search" type="search" placeholder="Search" autocomplete="off">
+        </span>
+
+
+    </div>
+</div>
+
+
+
+
+@section Scripts{
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+        });
+
+        $.typeahead({
+            input: '.type-ahead-search',
+            minLength: 2,
+            order: "asc",
+            dynamic: true,
+            delay:300,
+            offset: false,
+            hint: true,
+            display: ["Name", 'Category'],
+            //maxItem:20,
+            cancelButton: true,
+            emptyTemplate: "No result for {{query}}",
+            source: {
+                product: {
+                    ajax: function (query) {
+                        return {
+                            url: "/product/Gets",
+                            method: "get",
+                            dataType: "json",
+                            success: function (data) {
+                                return data;
+                            }
+                        }
+                    }
+                }
+            },
+            callback: {
+                onClick: function (node, a, item, event) {
+
+                    console.log(node)
+                    console.log(a)
+                    console.log(item)
+                    console.log(event)
+
+                    console.log('onClick function triggered');
+
+                }
+            }
+        });
+
+
+        function showresult() {
+            $.ajax({
+                url: "/product/Gets",
+                method: "get",
+                //data: { id: 1 },
+                dataType: "json",
+                success: function (data) {
+                    console.log(data);
+                    makePdfContent(data);
+                }
+            });
+
+            //makePdfContent();
+        }
+
+
+        function makePdfContent(list) {
+            var content = [{
+                table: {
+                    headerRows : 1,
+                    margin : [0, 10, 0, 0],
+                    widths: [30, '*', 'auto'],
+                    body : [
+                        ['Id', 'Product Name', 'Product Category']
+                    ]
+                },
+                fontSize:10
+            }];
+
+
+            for (var i = 0; i < list.length; i++) {
+                var obj = [list[i]['Id'].toString(), list[i]['Name'], list[i]['Category']  ]
+                content[0].table.body.push(obj);
+            }
+            generatePdf(content);
+        }
+
+        function generatePdf(bodyContent) {
+            //<img src="~/Content/image/company.png" />
+            //{ text: 'Company Name', alignment: 'center', fontSize: 15, margin: [0, 10, 0, 0] },
+            //{ text: 'Mohakhali, Dhaka, Bangladesh', alignment: 'center', fontSize: 10 },
+            //{ text: 'Email: company@gmail.com, marks@outlook.com', alignment: 'center', fontSize: 10 },
+            //{ text: 'Contact No: 019281239, 98123-912', alignment: 'center', fontSize: 10 }
+            var docDefinition = {
+                pageSize: 'A4',
+                pageOrientation: 'portrait', //portrait, landscape
+                pageMargins: [20, 70, 20, 30],
+                header: [
+                    { text: 'Company Name', alignment: 'center', fontSize: 15, margin: [0, 10, 0, 0] },
+                    { text: 'Mohakhali, Dhaka, Bangladesh', alignment: 'center', fontSize: 10 },
+                    { text: 'Email: company@gmail.com, marks@outlook.com', alignment: 'center', fontSize: 10 },
+                    { text: 'Contact No: 019281239, 98123-912', alignment: 'center', fontSize: 10 }
+                ],
+                content: bodyContent,
+                footer: function (currentPage, pageCount) {
+                    return {
+                        columns: [
+                            '',
+                            { text: 'Developed by pdfmake', alignment: 'center' },
+                            { text: currentPage.toString() + ' of ' + pageCount.toString(), alignment: 'right' }
+                        ],
+                        margin: [10, 10, 10, 10],
+                        fontSize: 9
+                    }
+                }
+
+            };
+            // open the PDF in a new window
+            //pdfMake.createPdf(docDefinition).open();
+
+            // print the PDF
+            //pdfMake.createPdf(docDefinition).print();
+
+            // download the PDF
+            pdfMake.createPdf(docDefinition).download('optionalName.pdf');
+        }
+
+    </script>
+}
+
+
+
